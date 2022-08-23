@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 ## TODO: implement tox/poetry to manage virtual environment for python
+## TODO: consider migration to go-lang support implementation of static typing
+## TODO: add capability to "include" libraries (ie. include "std:nova:core")
 
 import sys
 import subprocess
@@ -13,6 +15,8 @@ def uncons(xs):
     return (xs[0], xs[1:])
 
 ## TODO: Add OP_ASSERT to support testing framework - enabling us to ensure we can assert() the expected correct result
+## TODO: add `%` for mod suport
+## TODO: add `/` for division support
 class OperandId(Enum):
     PUSH_INT  = auto()
     PUSH_STR  = auto()
@@ -68,9 +72,8 @@ assert len(OperandId) == 33, "Exhaustive list of operands"
 ## TODO: add `include` to support the inclusion of base libraries of operations (ie. include "nova:core")
 ## TODO: add `{` and `}` as operands to help segment blocks and improve readability
 ## TODO: add `(` and `)` as operands to help with math ordering`
+
 BUILTIN_OPS = {
-    "int":     OperandId.PUSH_INT,
-    "str":     OperandId.PUSH_STR,
     "+":       OperandId.PLUS,
     "-":       OperandId.MINUS,
     "*":       OperandId.MULT,

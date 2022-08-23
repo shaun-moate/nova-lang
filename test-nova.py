@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+## TODO: implement tox/poetry to manage virtual environment for python
+## TODO: consider migration to go-lang support implementation of static typing
+## TODO: implement OOP for readability (TestCase, Stats, etc.)
 
 import subprocess
 import sys
