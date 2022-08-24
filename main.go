@@ -5,6 +5,7 @@ import (
 	"strings"
 	"os"
 	"fmt"
+	"strconv"
 )
 
 func check(e error) {
@@ -69,7 +70,7 @@ func find_first_index(line string) int {
 }
 
 type Location struct {
-	file_path     string
+	filePath      string
 	row           int
 	col           int
 }
@@ -99,7 +100,7 @@ func generate_words(file_path string) []Word {
 				l := Word {
 						word: lines[row][start:end-1],
 						location: Location {
-							file_path: file_path,
+							filePath: file_path,
 							row: row+1,
 							col: start,
 						},
@@ -111,13 +112,53 @@ func generate_words(file_path string) []Word {
 	return words
 }
 
+type Token struct {
+	tokenId     int
+	word        string
+	location    Location
+}
 
-// TODO: create a parse_words -> []Word where Word = {word, Location}, iterate over get_word_locations and read in read_lines() to create 2d array of words
+const (
+	TOKEN_INT int = iota
+	TOKEN_OP
+	TOKEN_COUNT
+)
+
+func test_tokens(length int, f string) {
+	if TOKEN_COUNT != length {
+		fmt.Printf("ERROR: ensure all tokens accounted for in %s", f)
+		os.Exit(1)
+	}
+}
+
+func generate_tokens(words []Word) []Token {
+	test_tokens(2, "generate_tokens()")
+	var tokens []Token
+	for j := 0; j < len(words); j++ {
+		if _, err := strconv.Atoi(words[j].word); err == nil {
+			var token Token = Token {
+				tokenId: TOKEN_INT,
+				word: words[j].word,
+				location: words[j].location,
+			}
+			tokens = append(tokens, token)
+		} else {
+			var token Token = Token {
+				tokenId: TOKEN_OP,
+				word: words[j].word,
+				location: words[j].location,
+			}
+			tokens = append(tokens, token)
+		}
+	}
+	return tokens
+}
+
 // TODO: implement tokenisation of words -> convert words into token with actions
 // TODO: consider structuring the project to include class folder, placing the Parser() in it <- create a parser object to action the parsing of the file
 
 func main() {
 	var file_path string = os.Args[1]
 	var words []Word = generate_words(file_path)
-	fmt.Println(words)
+	fmt.Println(generate_tokens(words))
 }
