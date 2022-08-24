@@ -33,33 +33,73 @@ func read_lines(raw_file *os.File) []string {
 	return lines
 }
 
-// TODO: add read words -> iterate through read_lines and collect word, location (file_path, row, col)
 func get_word_indices(lines []string) [][]int {
-	words := make([][]int, 0)
+	windices := make([][]int, 0)
 	for i := 0; i < len(lines); i++ {
 		indices := make([]int, 0)
 		if len(lines[i]) > 0 {
-			var index int = 0
-			for {
-				next := strings.Index(lines[i][index:], " ")
-				indices = append(indices, index)
-				if next > 0 {
-					index += next+1
-				} else {
-					break
-				}
-			}
+			indices = find_word_indices(lines[i])
 		} else if len(lines[i]) == 0 {
 			indices = append(indices, []int{-1}...)
 		}
-		words = append(words, [][]int{indices}...)
+		windices = append(windices, [][]int{indices}...)
 	}
-	return words
+	return windices
 }
+
+func find_word_indices(line string) []int {
+	var index int = find_first_index(line)
+	var indices []int
+	for {
+		next := strings.Index(line[index:], " ")
+		indices = append(indices, index)
+		if next > 0 {
+			index += next+1
+		} else {
+			break
+		}
+	}
+	return indices
+}
+
+func find_first_index(line string) int {
+	var index int
+	index = len(line) - len(strings.TrimLeft(line, " "))
+	return index
+}
+
+type Location struct {
+	file_path     string
+	row           int
+	col           int
+}
+
+func generate_word_locations(file_path string) []Location {
+	var file *os.File = open_file(file_path)
+	var lines []string = read_lines(file)
+	var indices [][]int = get_word_indices(lines)
+	var locations []Location
+
+	for i := 0; i < len(indices); i++ {
+		if indices[i][0] >= 0 {
+			for j := 0; j < len(indices[i]); j++ {
+				l := Location {
+						file_path: file_path,
+						row: i+1,
+						col: indices[i][j],
+					}
+				locations = append(locations, l)
+			}
+		}
+	}
+	return locations
+}
+
+// TODO: create a parse_words, combining read_lines and get_word_indices to create 2d array of words
+// TODO: implement tokenisation of words -> convert words into token with actions
 
 func main() {
 	var file_path string = os.Args[1]
-	var file *os.File = open_file(file_path)
-	var lines []string = read_lines(file)
-	fmt.Println(get_word_indices(lines))
+	var locations []Location = generate_word_locations(file_path)
+	fmt.Println(locations)
 }
