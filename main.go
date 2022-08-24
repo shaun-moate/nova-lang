@@ -33,12 +33,12 @@ func read_lines(raw_file *os.File) []string {
 	return lines
 }
 
-func get_word_indices(lines []string) [][]int {
+func generate_word_indices(lines []string) [][]int {
 	windices := make([][]int, 0)
 	for i := 0; i < len(lines); i++ {
 		indices := make([]int, 0)
 		if len(lines[i]) > 0 {
-			indices = find_word_indices(lines[i])
+			indices = find_word_indices_for_line(lines[i])
 		} else if len(lines[i]) == 0 {
 			indices = append(indices, []int{-1}...)
 		}
@@ -47,7 +47,7 @@ func get_word_indices(lines []string) [][]int {
 	return windices
 }
 
-func find_word_indices(line string) []int {
+func find_word_indices_for_line(line string) []int {
 	var index int = find_first_index(line)
 	var indices []int
 	for {
@@ -74,32 +74,50 @@ type Location struct {
 	col           int
 }
 
-func generate_word_locations(file_path string) []Location {
+type Word struct {
+	word          string
+	location      Location
+}
+
+func generate_words(file_path string) []Word {
 	var file *os.File = open_file(file_path)
 	var lines []string = read_lines(file)
-	var indices [][]int = get_word_indices(lines)
-	var locations []Location
+	var indices [][]int = generate_word_indices(lines)
+	var words []Word
 
 	for i := 0; i < len(indices); i++ {
 		if indices[i][0] >= 0 {
 			for j := 0; j < len(indices[i]); j++ {
-				l := Location {
-						file_path: file_path,
-						row: i+1,
-						col: indices[i][j],
+				var row int = i
+				var start int = indices[i][j]
+				var end int = 0
+				if j+1 > len(indices[i])-1 {
+					end = len(lines[i])+1
+				} else {
+					end = indices[i][j+1]
+				}
+				l := Word {
+						word: lines[row][start:end-1],
+						location: Location {
+							file_path: file_path,
+							row: row+1,
+							col: start,
+						},
 					}
-				locations = append(locations, l)
+				words = append(words, l)
 			}
 		}
 	}
-	return locations
+	return words
 }
 
-// TODO: create a parse_words, combining read_lines and get_word_indices to create 2d array of words
+
+// TODO: create a parse_words -> []Word where Word = {word, Location}, iterate over get_word_locations and read in read_lines() to create 2d array of words
 // TODO: implement tokenisation of words -> convert words into token with actions
+// TODO: consider structuring the project to include class folder, placing the Parser() in it <- create a parser object to action the parsing of the file
 
 func main() {
 	var file_path string = os.Args[1]
-	var locations []Location = generate_word_locations(file_path)
-	fmt.Println(locations)
+	var words []Word = generate_words(file_path)
+	fmt.Println(words)
 }
