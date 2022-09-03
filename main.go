@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bufio"
-	"strings"
 	"os"
 	"fmt"
+	"bufio"
+	"strings"
 	"strconv"
 )
 
@@ -155,6 +155,55 @@ func generate_tokens(words []Word) []Token {
 	return tokens
 }
 
+
+type Operand struct {
+	operandId   int
+	tokenId     int
+	token       interface{}
+	location    Location
+}
+
+const (
+	OP_PUSH_INT int = iota
+	OP_PLUS
+	OP_COUNT
+)
+
+func test_ops(length int, f string) {
+	if OP_COUNT != length {
+		fmt.Printf("ERROR: ensure all operands accounted for in %s", f)
+		os.Exit(1)
+	}
+}
+
+func generate_program(tokens []Token) []Operand {
+	test_ops(2, "generate_program()")
+	mapOperands := map[string]int{
+		"+": OP_PLUS,
+	}
+	var program []Operand
+	for j := 0; j < len(tokens); j++ {
+		if tokens[j].tokenId == TOKEN_OP {
+			var operand Operand = Operand {
+				operandId: mapOperands[tokens[j].token.(string)],
+				tokenId: TOKEN_INT,
+				token: tokens[j].token,
+				location: tokens[j].location,
+			}
+			program = append(program, operand)
+		} else if tokens[j].tokenId == TOKEN_INT {
+			var operand Operand = Operand {
+				operandId: OP_PUSH_INT,
+				tokenId: TOKEN_OP,
+				token: tokens[j].token,
+				location: tokens[j].location,
+			}
+			program = append(program, operand)
+		}
+	}
+	return program
+}
+
 // TODO: implement Intrinsic operands and Operand, creating []Operand which is a program!
 // TODO: consider structuring the project to include class folder, placing the Parser() in it <- create a parser object to action the parsing of the file
 
@@ -162,5 +211,6 @@ func main() {
 	var file_path string = os.Args[1]
 	var words []Word = generate_words(file_path)
 	var tokens []Token = generate_tokens(words)
-	fmt.Println(tokens)
+	var program []Operand = generate_program(tokens)
+	fmt.Println(program)
 }
