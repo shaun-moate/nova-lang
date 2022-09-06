@@ -170,6 +170,14 @@ const (
 	OP_COUNT
 )
 
+func generate_operands() map[string]int {
+	test_ops(3, "generate_operands()")
+	return map[string]int{
+		"+": OP_PLUS,
+		"dump": OP_DUMP,
+	}
+}
+
 func test_ops(length int, f string) {
 	if OP_COUNT != length {
 		fmt.Printf("ERROR: ensure all operands accounted for in %s", f)
@@ -178,11 +186,7 @@ func test_ops(length int, f string) {
 }
 
 func generate_program(tokens []Token) []Operand {
-	test_ops(3, "generate_program()")
-	mapOperands := map[string]int{
-		"+": OP_PLUS,
-		"dump": OP_DUMP,
-	}
+	var mapOperands map[string]int = generate_operands()
 	var program []Operand
 	for j := 0; j < len(tokens); j++ {
 		if tokens[j].tokenId == TOKEN_OP {
@@ -215,16 +219,75 @@ func generate_program(tokens []Token) []Operand {
 	return program
 }
 
-// TODO: implement simulate_program()
+type Stack struct {
+	items     []int
+}
+
+func NewEmptyStack() *Stack {
+	return &Stack {
+		items: nil,
+	}
+}
+
+func (s *Stack) Push(v int) {
+	s.items = append(s.items, v)
+}
+
+func (s *Stack) Pop() int {
+	var l int = len(s.items)
+	if l == 0 {
+		return 0
+	}
+	lastItem := s.items[l-1]
+	s.items = s.items[:l-1]
+	return lastItem
+}
+
+func simulate_program(program []Operand) {
+	stack := NewEmptyStack()
+	for i := 0; i < len(program); i++ {
+		if program[i].operandId == OP_PUSH_INT {
+			stack.Push(program[i].token.(int))
+		} else if program[i].operandId == OP_PLUS {
+			x := stack.Pop()
+			y := stack.Pop()
+			stack.Push(x+y)
+		} else if program[i].operandId == OP_DUMP {
+			x := stack.Pop()
+			fmt.Printf("%d", x)
+		} else {
+			fmt.Printf("ERROR: ensure all operands is unreachable in simulate_program()")
+			os.Exit(1)
+		}
+	}
+}
+
+func program_helper() {
+    fmt.Printf("-------------------------------------------\n")
+    fmt.Printf("Usage: nova-lang <SUBCOMMAND> [ARGS]\n")
+    fmt.Printf("SUBCOMMANDS:\n")
+    fmt.Printf("    --help     (-h)              Present the helper documents\n")
+    fmt.Printf("    --simulate (-s) <file>       Simulate the program using go-lang\n")
+    fmt.Printf("-------------------------------------------\n")
+	os.Exit(0)
+}
+
 // TODO: implement compile_program()
 // TODO: implement testing framework
 // TODO: replicate operands to pass all tests on both simulation and compilation
 // TODO: consider structuring the project to include class folder, placing the Parser() in it <- create a parser object to action the parsing of the file
 
 func main() {
-	var file_path string = os.Args[1]
+	var runtime string = os.Args[1]
+	var file_path string = os.Args[2]
 	var words []Word = generate_words(file_path)
 	var tokens []Token = generate_tokens(words)
 	var program []Operand = generate_program(tokens)
-	fmt.Println(program)
+	if runtime == "-s" || runtime == "--simulate" {
+		simulate_program(program)
+	} else if runtime == "-h" || runtime == "--help" {
+		program_helper()
+	} else {
+		program_helper()
+	}
 }
