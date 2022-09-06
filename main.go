@@ -102,7 +102,7 @@ func generate_words(file_path string) []Word {
 						location: Location {
 							filePath: file_path,
 							row: row+1,
-							col: start,
+							col: start+1,
 						},
 					}
 				words = append(words, l)
@@ -159,13 +159,14 @@ func generate_tokens(words []Word) []Token {
 type Operand struct {
 	operandId   int
 	tokenId     int
-	token       interface{}
+	token       interface{} // TODO: turn this into a Union type with set types
 	location    Location
 }
 
 const (
 	OP_PUSH_INT int = iota
 	OP_PLUS
+	OP_DUMP
 	OP_COUNT
 )
 
@@ -177,20 +178,30 @@ func test_ops(length int, f string) {
 }
 
 func generate_program(tokens []Token) []Operand {
-	test_ops(2, "generate_program()")
+	test_ops(3, "generate_program()")
 	mapOperands := map[string]int{
 		"+": OP_PLUS,
+		"dump": OP_DUMP,
 	}
 	var program []Operand
 	for j := 0; j < len(tokens); j++ {
 		if tokens[j].tokenId == TOKEN_OP {
-			var operand Operand = Operand {
-				operandId: mapOperands[tokens[j].token.(string)],
-				tokenId: TOKEN_INT,
-				token: tokens[j].token,
-				location: tokens[j].location,
+			if _, ok := mapOperands[tokens[j].token.(string)]; ok {
+				var operand Operand = Operand {
+					operandId: mapOperands[tokens[j].token.(string)],
+					tokenId: TOKEN_INT,
+					token: tokens[j].token,
+					location: tokens[j].location,
+				}
+				program = append(program, operand)
+			} else {
+				f := tokens[j].location.filePath
+				r := tokens[j].location.row
+				c := tokens[j].location.col
+				o := tokens[j].token.(string)
+				fmt.Printf("%s:%d:%d: ERROR: unknown operand `%s`", f, r, c, o)
+				os.Exit(1)
 			}
-			program = append(program, operand)
 		} else if tokens[j].tokenId == TOKEN_INT {
 			var operand Operand = Operand {
 				operandId: OP_PUSH_INT,
@@ -204,7 +215,10 @@ func generate_program(tokens []Token) []Operand {
 	return program
 }
 
-// TODO: implement Intrinsic operands and Operand, creating []Operand which is a program!
+// TODO: implement simulate_program()
+// TODO: implement compile_program()
+// TODO: implement testing framework
+// TODO: replicate operands to pass all tests on both simulation and compilation
 // TODO: consider structuring the project to include class folder, placing the Parser() in it <- create a parser object to action the parsing of the file
 
 func main() {
