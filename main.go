@@ -167,14 +167,20 @@ type Operand struct {
 const (
 	OP_PUSH_INT int = iota
 	OP_PLUS
+	OP_MINUS
+	OP_MULTIPLY
+	OP_DIVIDE
 	OP_DUMP
 	OP_COUNT
 )
 
 func generate_operands() map[string]int {
-	test_ops(3, "generate_operands()")
+	test_ops(6, "generate_operands()")
 	return map[string]int{
 		"+": OP_PLUS,
+		"-": OP_MINUS,
+		"*": OP_MULTIPLY,
+		"/": OP_DIVIDE,
 		"dump": OP_DUMP,
 	}
 }
@@ -245,7 +251,7 @@ func (s *Stack) Pop() int {
 }
 
 func emulate_program(program []Operand) {
-	test_ops(3, "emulate_program()")
+	test_ops(6, "emulate_program()")
 	stack := NewEmptyStack()
 	for i := 0; i < len(program); i++ {
 		if program[i].operandId == OP_PUSH_INT {
@@ -254,6 +260,18 @@ func emulate_program(program []Operand) {
 			x := stack.Pop()
 			y := stack.Pop()
 			stack.Push(x+y)
+		} else if program[i].operandId == OP_MINUS {
+			x := stack.Pop()
+			y := stack.Pop()
+			stack.Push(y-x)
+		} else if program[i].operandId == OP_MULTIPLY {
+			x := stack.Pop()
+			y := stack.Pop()
+			stack.Push(x*y)
+		} else if program[i].operandId == OP_DIVIDE {
+			x := stack.Pop()
+			y := stack.Pop()
+			stack.Push(y/x)
 		} else if program[i].operandId == OP_DUMP {
 			x := stack.Pop()
 			fmt.Printf("%d", x)
@@ -265,7 +283,7 @@ func emulate_program(program []Operand) {
 }
 
 func compile_program(program []Operand) {
-	test_ops(3, "generate_program()")
+	test_ops(6, "generate_program()")
 	f, _ := os.Create("build/output.asm")
     f.WriteString("segment .text\n")
 	f.WriteString("dump:\n")
@@ -310,6 +328,21 @@ func compile_program(program []Operand) {
 			f.WriteString("     pop  rax\n")
 			f.WriteString("     pop  rbx\n")
 			f.WriteString("     add  rax,rbx \n")
+			f.WriteString("     push rax\n")
+		} else if program[i].operandId == OP_MINUS {
+			f.WriteString("     pop  rbx\n")
+			f.WriteString("     pop  rax\n")
+			f.WriteString("     sub  rax,rbx \n")
+			f.WriteString("     push rax\n")
+		} else if program[i].operandId == OP_MULTIPLY {
+			f.WriteString("     pop  rax\n")
+			f.WriteString("     pop  rbx\n")
+			f.WriteString("     mul  rax,rbx \n")
+			f.WriteString("     push rax\n")
+		} else if program[i].operandId == OP_DIVIDE {
+			f.WriteString("     pop  rbx\n")
+			f.WriteString("     pop  rax\n")
+			f.WriteString("     div  rbx \n")
 			f.WriteString("     push rax\n")
 		} else if program[i].operandId == OP_DUMP {
 			f.WriteString("     pop  rdi\n")

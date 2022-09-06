@@ -35,13 +35,13 @@ dump:
 global _start
 _start:
 addr_0:
-     push 34
+     push 500
 addr_1:
-     push 35
+     push 80
 addr_2:
-     pop  rax
      pop  rbx
-     add  rax,rbx 
+     pop  rax
+     sub  rax,rbx 
      push rax
 addr_3:
      pop  rdi
