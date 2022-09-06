@@ -244,8 +244,8 @@ func (s *Stack) Pop() int {
 	return lastItem
 }
 
-func simulate_program(program []Operand) {
-	test_ops(3, "simulate_program()")
+func emulate_program(program []Operand) {
+	test_ops(3, "emulate_program()")
 	stack := NewEmptyStack()
 	for i := 0; i < len(program); i++ {
 		if program[i].operandId == OP_PUSH_INT {
@@ -258,7 +258,7 @@ func simulate_program(program []Operand) {
 			x := stack.Pop()
 			fmt.Printf("%d", x)
 		} else {
-			fmt.Printf("ERROR: ensure all operands is unreachable in simulate_program()")
+			fmt.Printf("ERROR: ensure all operands is unreachable in emulate_program()")
 			os.Exit(1)
 		}
 	}
@@ -333,7 +333,7 @@ func novalang_usage() {
     fmt.Printf("SUBCOMMANDS:\n")
     fmt.Printf("    --compile  (-c) <file>       Compile the program to Assembly\n")
     fmt.Printf("    --help     (-h)              Present the helper documents\n")
-    fmt.Printf("    --simulate (-s) <file>       Simulate the program using go-lang\n")
+    fmt.Printf("    --emulate (-e) <file>        Emulate the program using go-lang\n")
     fmt.Printf("-------------------------------------------\n")
 	os.Exit(0)
 }
@@ -349,7 +349,6 @@ func compile_assembly() {
     fmt.Printf("-------------------------------------------\n")
 }
 
-// TODO: implement compile_program()
 // TODO: implement testing framework
 // TODO: replicate operands to pass all tests on both simulation and compilation
 // TODO: consider structuring the project to include class folder, placing the Parser() in it <- create a parser object to action the parsing of the file
@@ -360,8 +359,8 @@ func main() {
 	var words []Word = generate_words(file_path)
 	var tokens []Token = generate_tokens(words)
 	var program []Operand = generate_program(tokens)
-	if runtime == "-s" || runtime == "--simulate" {
-		simulate_program(program)
+	if runtime == "-e" || runtime == "--emulate" {
+		emulate_program(program)
 	} else if runtime == "-c" || runtime == "--compile" {
 		compile_program(program)
 	} else if runtime == "-h" || runtime == "--help" {
