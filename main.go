@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"fmt"
 	"bufio"
 	"strings"
@@ -244,6 +245,7 @@ func (s *Stack) Pop() int {
 }
 
 func simulate_program(program []Operand) {
+	test_ops(3, "simulate_program()")
 	stack := NewEmptyStack()
 	for i := 0; i < len(program); i++ {
 		if program[i].operandId == OP_PUSH_INT {
@@ -262,14 +264,89 @@ func simulate_program(program []Operand) {
 	}
 }
 
-func program_helper() {
+func compile_program(program []Operand) {
+	test_ops(3, "generate_program()")
+	f, _ := os.Create("build/output.asm")
+    f.WriteString("segment .text\n")
+	f.WriteString("dump:\n")
+	f.WriteString("    mov r9, -3689348814741910323\n")
+	f.WriteString("    sub rsp, 40\n")
+	f.WriteString("    mov BYTE [rsp+31], 10\n")
+	f.WriteString("    lea rcx, [rsp+30]\n")
+	f.WriteString(".L2:\n")
+	f.WriteString("    mov rax, rdi\n")
+	f.WriteString("    lea r8, [rsp+32]\n")
+	f.WriteString("    mul r9\n")
+	f.WriteString("    mov rax, rdi\n")
+	f.WriteString("    sub r8, rcx\n")
+	f.WriteString("    shr rdx, 3\n")
+	f.WriteString("    lea rsi, [rdx+rdx*4]\n")
+	f.WriteString("    add rsi, rsi\n")
+	f.WriteString("    sub rax, rsi\n")
+	f.WriteString("    add eax, 48\n")
+	f.WriteString("    mov BYTE [rcx], al\n")
+	f.WriteString("    mov rax, rdi\n")
+	f.WriteString("    mov rdi, rdx\n")
+	f.WriteString("    mov rdx, rcx\n")
+	f.WriteString("    sub rcx, 1\n")
+	f.WriteString("    cmp rax, 9\n")
+	f.WriteString("    ja  .L2\n")
+	f.WriteString("    lea rax, [rsp+32]\n")
+	f.WriteString("    mov edi, 1\n")
+	f.WriteString("    sub rdx, rax\n")
+	f.WriteString("    xor eax, eax\n")
+	f.WriteString("    lea rsi, [rsp+32+rdx]\n")
+	f.WriteString("    mov rdx, r8\n")
+	f.WriteString("    mov rax, 1\n")
+	f.WriteString("    syscall\n")
+	f.WriteString("    add rsp, 40\n")
+	f.WriteString("    ret\n")
+	f.WriteString("global _start\n_start:\n")
+	for i := 0; i < len(program); i++ {
+		fmt.Fprintf(f, "addr_%d:\n", i)
+		if program[i].operandId == OP_PUSH_INT {
+			fmt.Fprintf(f, "     push %d\n", program[i].token)
+		} else if program[i].operandId == OP_PLUS {
+			f.WriteString("     pop  rax\n")
+			f.WriteString("     pop  rbx\n")
+			f.WriteString("     add  rax,rbx \n")
+			f.WriteString("     push rax\n")
+		} else if program[i].operandId == OP_DUMP {
+			f.WriteString("     pop  rdi\n")
+			f.WriteString("     call dump\n")
+		} else {
+			fmt.Printf("ERROR: ensure all operands is unreachable in compile_program()")
+			os.Exit(1)
+		}
+	}
+	fmt.Fprintf(f, "addr_%d:\n", len(program))
+	f.WriteString("    mov rax, 60\n")
+	f.WriteString("    mov rdi, 0\n")
+	f.WriteString("    syscall\n")
+	f.Close()
+	compile_assembly()
+}
+
+func novalang_usage() {
     fmt.Printf("-------------------------------------------\n")
     fmt.Printf("Usage: nova-lang <SUBCOMMAND> [ARGS]\n")
     fmt.Printf("SUBCOMMANDS:\n")
+    fmt.Printf("    --compile  (-c) <file>       Compile the program to Assembly\n")
     fmt.Printf("    --help     (-h)              Present the helper documents\n")
     fmt.Printf("    --simulate (-s) <file>       Simulate the program using go-lang\n")
     fmt.Printf("-------------------------------------------\n")
 	os.Exit(0)
+}
+
+func compile_assembly() {
+    fmt.Printf("BUILD:-------------------------------------\n")
+    fmt.Printf("run: nasm -felf64 build/output.asm\n")
+    c := exec.Command("nasm", "-felf64", "build/output.asm")
+	c.Run()
+    fmt.Printf("run: ld -o build/output build/output.o\n")
+    l := exec.Command("ld", "-o", "build/output", "build/output.o")
+	l.Run()
+    fmt.Printf("-------------------------------------------\n")
 }
 
 // TODO: implement compile_program()
@@ -285,9 +362,11 @@ func main() {
 	var program []Operand = generate_program(tokens)
 	if runtime == "-s" || runtime == "--simulate" {
 		simulate_program(program)
+	} else if runtime == "-c" || runtime == "--compile" {
+		compile_program(program)
 	} else if runtime == "-h" || runtime == "--help" {
-		program_helper()
+		novalang_usage()
 	} else {
-		program_helper()
+		novalang_usage()
 	}
 }

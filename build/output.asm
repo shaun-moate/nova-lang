@@ -35,18 +35,18 @@ dump:
 global _start
 _start:
 addr_0:
-    push 420
+     push 34
 addr_1:
-    push 69
+     push 35
 addr_2:
-    pop rax
+     pop  rax
+     pop  rbx
+     add  rax,rbx 
+     push rax
 addr_3:
-    pop rdi
-    call dump
+     pop  rdi
+     call dump
 addr_4:
     mov rax, 60
     mov rdi, 0
     syscall
-segment .bss
-    mem: resb 138000
-segment .data
